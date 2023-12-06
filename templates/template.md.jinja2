@@ -1,0 +1,108 @@
+# {{ spec.info.title }} {{ spec.info.version }}
+
+openapi version {{ spec.openapi }}
+
+{%- if spec.info.description -%}
+{{ spec.info.description }}
+{%- endif -%}
+
+{%- for server in spec.servers -%}
+* {{ server.url }} ({{ server.description }})
+{%- endfor -%}
+
+{%- for path, methods in spec.paths.items() -%}
+
+{%- for method, operation in methods.items() %}
+
+## {{ method.upper() }} {{ path }}
+
+{{ operation.summary }}
+
+{% if operation.description and operation.description != operation.summary -%}
+{{ operation.description }}
+{%- endif -%}
+
+{%- if operation.parameters %}
+### Parameters
+
+| Name | Type | Required |
+|-|-|-|
+{% for param in operation.parameters -%}
+| {{ param.name }} | {{ param.schema.type }} | {{ param.required }} | {{ param.description }} |
+{%- endfor -%}
+{%- endif -%}
+
+{% if operation.requestBody %}
+### Request Body
+
+{% if 'application/json' in operation.requestBody.content -%}
+{{ operation.requestBody.content['application/json'].schema | schema_links }}
+{%- if operation.requestBody.content['application/json'].examples %}
+
+#### Examples
+
+{%- for example_name, example in operation.requestBody.content['application/json'].examples.items() -%}
+
+{%- if example.description -%}
+{{ example.description }}
+{%- endif %}
+
+```json
+{{ example.value | json_dumps }}
+```
+
+{% endfor -%}
+{%- endif -%}
+{%- endif -%}
+
+{%- endif %}
+
+### Responses
+{% for status_code, response in operation.responses.items() %}
+#### {{ status_code }}
+
+{% if response.description -%}
+{{ response.description }}
+{%- endif -%}
+
+{% if 'application/json' in response.content %}
+
+{{ response.content['application/json'].schema | schema_links  }}
+{%- if response.content['application/json'].examples -%}
+Examples
+
+{%- for example_name, example in response.content['application/json'].examples.items() -%}
+
+{%- if example.description -%}
+{{ example.description }}
+{%- endif -%}
+
+```json
+{{ example.value | json_dumps }}
+```
+{%- endfor -%}
+{%- endif -%}
+
+{%- endif -%}
+
+{%- endfor -%}
+{%- endfor -%}
+{%- endfor %}
+## Components
+
+{%- if spec.components.schemas -%}
+{% for schema_name, schema in spec.components.schemas.items() %}
+
+### {{ schema_name }}
+
+{% if schema.description -%}
+{{ schema.description }}
+{%- endif -%}
+
+| Field | Type |
+|-|-|
+{%- for property_name, property in schema.properties.items() %}
+| {{ property_name }} | {{ property.type }} |
+{%- endfor -%}
+{%- endfor -%}
+{%- endif -%}
